@@ -1,2 +1,2 @@
-# Rust-learn
+# Learn-rust
 Learning Rust language. Experiments, tests... 
