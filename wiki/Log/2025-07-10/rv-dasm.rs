@@ -43,6 +43,17 @@ const RS1_MASK: u32 = FIELD_5B << RS1_POS;
 const RS2_MASK: u32 = FIELD_5B << RS2_POS;
 const FUNC7_MASK: u32 = FIELD_7B << FUNC7_POS;
 const IMM12_MASK: u32 = FIELD_12B << IMM12_POS;  
+//────────────────────────────────────────────────
+//  DEFINICION DE LOS OPCODES
+//────────────────────────────────────────────────
+//  Instrucciones tipo-I
+//────────────────────────────
+//-- Estas instrucciones se dividen a su vez en dos grupos:
+//  - Instrucciones aritméticas (ADDI, ANDI, ORI,...)
+//  - Instrucciones de carga (LW, LH, LB,...)
+const OPCODE_I_ARITH: u32 = 0x13;   //-- ADDI: addi rd, rs1, imm12
+const OPCODE_I_LOAD: u32 = 0x03;     //-- LW: lw rd, imm12(rs1)
+const FUNC3_I_ADDI: u32 = 0b000;  //-- Func3 de ADDI
 
 fn get_opcode(inst: u32) -> u32 {
 //────────────────────────────────────────────────
@@ -94,14 +105,18 @@ fn get_rs2(inst: u32) -> u32 {
     (inst & RS2_MASK) >> RS2_POS    
 }
 
-fn get_imm12(inst: u32) -> u32 {
+fn get_imm12(inst: u32) -> i32 {
 //────────────────────────────────────────────────
 // Entrada: Instrucción RISC-V
 // Salida: Inmediato de 12 bits de la instrucción
 //────────────────────────────────────────────────
   //-- Aplicar la máscara para extraer el campo
   //-- y desplazarlo a la posición 0
-  (inst & IMM12_MASK) >> IMM12_POS
+  let imm12: u32 = (inst & IMM12_MASK) >> IMM12_POS;
+
+  //-- Convertir el valor a i32 para manejar el signo
+  //-- y devolverlo!
+  sign_ext(imm12 as i32)
 }
 
 fn get_func7(inst: u32) -> u32 {
@@ -138,7 +153,68 @@ fn print_fields(inst: u32) {
     println!("   - Inmediato: {:#X}", imm);
     println!("   - Func7: {:#07b}", func7);
 }
+
+fn sign_ext(value: i32) -> i32 {
 //────────────────────────────────────────────────
+// Entrada: Valor de 12 bits  
+// Salida: Valor extendido a 32 bits con signo
+//────────────────────────────────────────────────
+    //-- Obtener el bit de signo
+    //-- sign_bit = true --> negativo
+    let sign_bit = (value & 0x800) != 0;
+
+    //-- En caso de ser negativo, extender el signo
+    if sign_bit {
+        value | !0xFFF  //-- Extender el signo a 32 bits
+    } else {
+        value  //-- No es negativo, devolver el valor original
+    }
+}
+
+fn print_instruction(inst: u32) {
+//────────────────────────────────────────────────
+// Entrada: Instrucción RISC-V
+// Salida: Imprime la instrucción en formato legible
+//────────────────────────────────────────────────
+    //-- Extraer el opcode de la instrucción  
+    let opcode = get_opcode(inst);
+
+    //-- Comprobar el tipo de instrucción que es, según el opcode
+    if opcode == OPCODE_I_ARITH || opcode == OPCODE_I_LOAD {
+
+        //-- Sabemos el formato, podemos obtener todos los campos
+        let rd = get_rd(inst);
+        let func3 = get_func3(inst);
+        let rs1 = get_rs1(inst);
+        let imm = get_imm12(inst);
+
+        //-- Distinguir entre el tipo I de instruccion:
+        //--   - Instrucciones aritmeticas (ADDI, ANDI, ORI,...)
+        //--   - Instrucciones de carga (LW, LH, LB,...)
+        if opcode == OPCODE_I_ARITH {
+
+            //-- Según el campo func3, podemos distinguir
+            //-- entre las diferentes instrucciones aritméticas
+            if func3 == FUNC3_I_ADDI {
+                println!("🟢 [{:#010X}]: addi x{}, x{}, {}", inst, rd, rs1, imm as i32);
+            } else {
+                println!("   * Instrucción: I-ARITH DESCONOCIDA");
+            }
+
+        } else if opcode == OPCODE_I_LOAD {
+            println!("   - Instrucción: I-LOAD");
+            println!("     - Operación: x{} = Mem[x{} + {:#X}]", rd, rs1, imm);
+        } else {
+            println!("   - Instrucción: DESCONOCIDA");
+            print_fields(inst);
+        }
+
+    } else {
+        println!("   - Instrucción: DESCONOCIDA");
+        print_fields(inst);
+    }
+
+}
 
 
 //────────────────────────────────────────────────
@@ -146,22 +222,35 @@ fn print_fields(inst: u32) {
 //────────────────────────────────────────────────
 fn main() {
 
-    //-- Consatantes: Instrucciones RISC-V
-    const INST1: u32 = 0x00000013;  //-- NOP: addi x0, x0, 0
-    const INST2: u32 = 0x0aa00093;  //-- add x1, x0, 0xAA    
+    //-- Constantes: Instrucciones RISC-V
+    const INST0: u32 = 0x00000013; //-- addi x0, x0, 0
+    const INST1: u32 = 0x00100093; //-- addi x1, x0, 1
+    const INST2: u32 = 0x00200113; //-- addi x2, x0, 2
+    const INST3: u32 = 0xfff00193; //-- addi x3, x0, -1
+    const INST4: u32 = 0x7ff00213; //-- addi x4, x0, 0x7ff
+    const INST5: u32 = 0x00308f93; //-- addi x31, x1, 3
+    const INST6: u32 = 0x00410413; //-- addi x8, x2, 4
+    const INST7: u32 = 0x00820813; //-- addi x16, x4, 8
+    const INST8: u32 = 0x01040893; //-- addi x17, x8, 16
+    const INST9: u32 = 0xff040893; //-- addi x18, x8, -16
+    const INST10: u32 = 0x80040893; //-- addi x17, x8, -2048
+    const INST11: u32 = 0x0aa00093; //-- addi x1, x0, 0xAA    
 
-    //-- Mostrar la instrucción actual
-    println!("🟢 Instrucción: {:#010X}", INST1);
-
-    //-- Imprimir los campos
-    print_fields(INST1);
-
-    println!("🟢 Instrucción: {:#010X}", INST2);
-    print_fields(INST2);
-
-    println!("Test....");
-    println!("Imm: {:#X}", get_imm12(0x001_0_0000)); 
+    //-- Desensamblar las instrucciones
+    print_instruction(INST0);
+    print_instruction(INST1);
+    print_instruction(INST2);
+    print_instruction(INST3);
+    print_instruction(INST4);
+    print_instruction(INST5);
+    print_instruction(INST6);
+    print_instruction(INST7);
+    print_instruction(INST8);
+    print_instruction(INST9);
+    print_instruction(INST10);
+    print_instruction(INST11);
 }
+
 
 //────────────────────────────────────────────────
 //  TESTS
@@ -275,7 +364,23 @@ fn test_get_imm12() {
   assert_eq!(get_imm12(0x100_0_0000), 0x100);
   assert_eq!(get_imm12(0x200_0_0000), 0x200);
   assert_eq!(get_imm12(0x400_0_0000), 0x400);
-  assert_eq!(get_imm12(0x800_0_0000), 0x800);
-  assert_eq!(get_imm12(0xFFF_0_0000), 0xFFF); 
+
+  //-- Pruebs de signo
+  assert_eq!(get_imm12(0x800_0_0000), 0xFFFF_F800u32 as i32); //-- -2048
+  assert_eq!(get_imm12(0xFFF_0_0000), 0xFFFF_FFFFu32 as i32); //-- -1
+  assert_eq!(get_imm12(0xFFF_FFFFF), -1); 
+  assert_eq!(get_imm12(0x800_FFFFF), -2048);
+  assert_eq!(get_imm12(0x7FF_FFFFF), 2047);
+  assert_eq!(get_imm12(0xFFE_FFFFF), -2);
 }
 
+#[test]
+fn test_sign_ext() {
+  //-- Test de la función sign_ext
+  assert_eq!(sign_ext(0x000), 0);
+  assert_eq!(sign_ext(0x001), 1);
+  assert_eq!(sign_ext(0x7FF), 2047);  //-- 0x7FF
+  assert_eq!(sign_ext(0x800), -2048); //-- 0x800
+  assert_eq!(sign_ext(0xFFF), -1);
+  assert_eq!(sign_ext(0x7FF_FFFF), -1);
+}
