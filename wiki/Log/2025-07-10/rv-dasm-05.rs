@@ -53,8 +53,6 @@ const IMM12_MASK: u32 = FIELD_12B << IMM12_POS;
 //  - Instrucciones de carga (LW, LH, LB,...)
 const OPCODE_I_ARITH: u32 = 0x13;   //-- ADDI: addi rd, rs1, imm12
 const OPCODE_I_LOAD: u32 = 0x03;    //-- LW: lw rd, imm12(rs1)
-const FUNC3_I_ADDI: u32 = 0b000;    //-- Func3 de ADDI
-const FUNC3_I_SLLI: u32 = 0b001;    //-- Func3 de SLLI
 
 fn get_opcode(inst: u32) -> u32 {
 //────────────────────────────────────────────────
@@ -204,9 +202,26 @@ fn is_type_i_load(opcode: u32) -> bool {
   }
 }
 
-
-fn get_instr_string(inst: u32) -> String {
+fn inst_type_i_arith(func3: u32) -> String {
 //────────────────────────────────────────────────
+//  Obtener el nombre de la instruccion aritmetica
+//  de tipo i cuyo codigo func3 es el dado
+//  ENTRADA: Codigo func3
+//  SALIDA: nemonico
+//────────────────────────────────────────────────
+
+    let name = [
+      "addi", //-- 000
+      "slli", //-- 001
+    ];
+
+    name[func3 as usize].to_string()
+}
+
+
+fn disassembler(inst: u32) -> String {
+//────────────────────────────────────────────────
+// Desensamblar una instruccion en codigo maquina
 // Entrada: Instrucción en codigo maquina RISC-V
 // Salida: Cadena con la instrucción en ensamblador
 //────────────────────────────────────────────────
@@ -229,15 +244,9 @@ fn get_instr_string(inst: u32) -> String {
             let rs1 = get_rs1(inst);
             let imm = get_imm12(inst) as i32;
 
-            //-- Según el campo func3, podemos distinguir
-            //-- entre las diferentes instrucciones aritméticas
-            if func3 == FUNC3_I_ADDI {
-                format!("addi x{}, x{}, {}", rd, rs1, imm)
-            } else if func3 == FUNC3_I_SLLI {
-                format!("slli x{}, x{}, {}", rd, rs1, imm)
-            } else {
-                format!("Inst({:#05b}), x{}, x{}, {}", func3, rd, rs1, imm)
-            }
+            //-- Nombre de la instruccion            
+            let name = inst_type_i_arith(func3);
+            format!("{} x{}, x{}, {}", name, rd, rs1, imm)
 
         } else if is_type_i_load(opcode) {
             let rd = get_rd(inst);
@@ -284,7 +293,7 @@ fn main() {
         let machine_code: u32 = insts[i];
 
         //-- Pasar la instruccion a String
-        let inst: String = get_instr_string(insts[i]);
+        let inst: String = disassembler(insts[i]);
 
         //-- Imprimirla!
         println!("🟢 [{machine_code:#010X}]: {inst}");
@@ -446,37 +455,37 @@ fn test_is_type_i() {
 }
 
 #[test]
-fn test_get_instr_string_addi() {
-    //-- Test de la funcion get_instr_string
+fn test_disassembler_addi() {
+    //-- Test de la funcion disassembler
     //-- Instrucciones addi 
 
-    assert_eq!(get_instr_string(0x00000013), "addi x0, x0, 0");
-    assert_eq!(get_instr_string(0x00100093), "addi x1, x0, 1");
-    assert_eq!(get_instr_string(0x00200113), "addi x2, x0, 2");
-    assert_eq!(get_instr_string(0xfff00193), "addi x3, x0, -1");
-    assert_eq!(get_instr_string(0x7ff00213), "addi x4, x0, 2047");
-    assert_eq!(get_instr_string(0x00308f93), "addi x31, x1, 3");
-    assert_eq!(get_instr_string(0x00410413), "addi x8, x2, 4");
-    assert_eq!(get_instr_string(0x00820813), "addi x16, x4, 8");
-    assert_eq!(get_instr_string(0x01040893), "addi x17, x8, 16");
-    assert_eq!(get_instr_string(0xff040893), "addi x17, x8, -16");
-    assert_eq!(get_instr_string(0x80040893), "addi x17, x8, -2048");
-    assert_eq!(get_instr_string(0x0aa00093), "addi x1, x0, 170");    
+    assert_eq!(disassembler(0x00000013), "addi x0, x0, 0");
+    assert_eq!(disassembler(0x00100093), "addi x1, x0, 1");
+    assert_eq!(disassembler(0x00200113), "addi x2, x0, 2");
+    assert_eq!(disassembler(0xfff00193), "addi x3, x0, -1");
+    assert_eq!(disassembler(0x7ff00213), "addi x4, x0, 2047");
+    assert_eq!(disassembler(0x00308f93), "addi x31, x1, 3");
+    assert_eq!(disassembler(0x00410413), "addi x8, x2, 4");
+    assert_eq!(disassembler(0x00820813), "addi x16, x4, 8");
+    assert_eq!(disassembler(0x01040893), "addi x17, x8, 16");
+    assert_eq!(disassembler(0xff040893), "addi x17, x8, -16");
+    assert_eq!(disassembler(0x80040893), "addi x17, x8, -2048");
+    assert_eq!(disassembler(0x0aa00093), "addi x1, x0, 170");    
 }
 
 #[test]
-fn test_get_instr_string_slli() {
-    //-- Test de la funcion get_instr_string
+fn test_disassembler_slli() {
+    //-- Test de la funcion disassembler
     //-- Instrucciones slli
 
-    assert_eq!(get_instr_string(0x00111093), "slli x1, x2, 1");
-    assert_eq!(get_instr_string(0x00001013), "slli x0, x0, 0");
-    assert_eq!(get_instr_string(0x00209f93), "slli x31, x1, 2");
-    assert_eq!(get_instr_string(0x00411f13), "slli x30, x2, 4");
-    assert_eq!(get_instr_string(0x00819e93), "slli x29, x3, 8");
-    assert_eq!(get_instr_string(0x01021e13), "slli x28, x4, 16");
-    assert_eq!(get_instr_string(0x01129d93), "slli x27, x5, 17");
-    assert_eq!(get_instr_string(0x01e31d13), "slli x26, x6, 30");
-    assert_eq!(get_instr_string(0x01f39c93), "slli x25, x7, 31");
+    assert_eq!(disassembler(0x00111093), "slli x1, x2, 1");
+    assert_eq!(disassembler(0x00001013), "slli x0, x0, 0");
+    assert_eq!(disassembler(0x00209f93), "slli x31, x1, 2");
+    assert_eq!(disassembler(0x00411f13), "slli x30, x2, 4");
+    assert_eq!(disassembler(0x00819e93), "slli x29, x3, 8");
+    assert_eq!(disassembler(0x01021e13), "slli x28, x4, 16");
+    assert_eq!(disassembler(0x01129d93), "slli x27, x5, 17");
+    assert_eq!(disassembler(0x01e31d13), "slli x26, x6, 30");
+    assert_eq!(disassembler(0x01f39c93), "slli x25, x7, 31");
 
 }
