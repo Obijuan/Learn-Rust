@@ -52,8 +52,9 @@ const IMM12_MASK: u32 = FIELD_12B << IMM12_POS;
 //  - Instrucciones aritméticas (ADDI, ANDI, ORI,...)
 //  - Instrucciones de carga (LW, LH, LB,...)
 const OPCODE_I_ARITH: u32 = 0x13;   //-- ADDI: addi rd, rs1, imm12
-const OPCODE_I_LOAD: u32 = 0x03;     //-- LW: lw rd, imm12(rs1)
-const FUNC3_I_ADDI: u32 = 0b000;  //-- Func3 de ADDI
+const OPCODE_I_LOAD: u32 = 0x03;    //-- LW: lw rd, imm12(rs1)
+const FUNC3_I_ADDI: u32 = 0b000;    //-- Func3 de ADDI
+const FUNC3_I_SLLI: u32 = 0b001;    //-- Func3 de SLLI
 
 fn get_opcode(inst: u32) -> u32 {
 //────────────────────────────────────────────────
@@ -194,6 +195,15 @@ fn is_type_i_arith(opcode: u32) -> bool {
     }
 }
 
+fn is_type_i_load(opcode: u32) -> bool {
+  if opcode == OPCODE_I_LOAD {
+    true
+  }
+  else {
+    false
+  }
+}
+
 
 fn get_instr_string(inst: u32) -> String {
 //────────────────────────────────────────────────
@@ -215,18 +225,21 @@ fn get_instr_string(inst: u32) -> String {
         //--   - Instrucciones de carga (LW, LH, LB,...)
         if is_type_i_arith(opcode) {
 
+            let rd = get_rd(inst);
+            let rs1 = get_rs1(inst);
+            let imm = get_imm12(inst) as i32;
+
             //-- Según el campo func3, podemos distinguir
             //-- entre las diferentes instrucciones aritméticas
             if func3 == FUNC3_I_ADDI {
-                let rd = get_rd(inst);
-                let rs1 = get_rs1(inst);
-                let imm = get_imm12(inst);
-                format!("addi x{}, x{}, {}", rd, rs1, imm as i32)
+                format!("addi x{}, x{}, {}", rd, rs1, imm)
+            } else if func3 == FUNC3_I_SLLI {
+                format!("slli x{}, x{}, {}", rd, rs1, imm)
             } else {
-                String::from(" * Instrucción: I-ARITH DESCONOCIDA")
+                format!("Inst({:#05b}), x{}, x{}, {}", func3, rd, rs1, imm)
             }
 
-        } else if opcode == OPCODE_I_LOAD {
+        } else if is_type_i_load(opcode) {
             let rd = get_rd(inst);
             let rs1 = get_rs1(inst);
             let imm = get_imm12(inst);
@@ -253,7 +266,16 @@ fn main() {
     //-- Instrucciones RISC-V a desensamblar
     let insts = [
         0x00100093, // addi x1, x0, 1
-        0x00200113, // addi x2, x0, 2   
+        0x00200113, // addi x2, x0, 2
+        0x00111093, // slli x1, x2, 1
+        0x00001013, // slli x0,  x0, 0
+        0x00209f93, // slli x31, x1, 2
+        0x00411f13, // slli x30, x2, 4
+        0x00819e93, // slli x29, x3, 8
+        0x01021e13, // slli x28, x4, 16
+        0x01129d93, // slli x27, x5, 17
+        0x01e31d13, // slli x26, x6, 30
+        0x01f39c93, // slli x25, x7, 31
     ];
 
 
@@ -440,5 +462,21 @@ fn test_get_instr_string_addi() {
     assert_eq!(get_instr_string(0xff040893), "addi x17, x8, -16");
     assert_eq!(get_instr_string(0x80040893), "addi x17, x8, -2048");
     assert_eq!(get_instr_string(0x0aa00093), "addi x1, x0, 170");    
+}
+
+#[test]
+fn test_get_instr_string_slli() {
+    //-- Test de la funcion get_instr_string
+    //-- Instrucciones slli
+
+    assert_eq!(get_instr_string(0x00111093), "slli x1, x2, 1");
+    assert_eq!(get_instr_string(0x00001013), "slli x0, x0, 0");
+    assert_eq!(get_instr_string(0x00209f93), "slli x31, x1, 2");
+    assert_eq!(get_instr_string(0x00411f13), "slli x30, x2, 4");
+    assert_eq!(get_instr_string(0x00819e93), "slli x29, x3, 8");
+    assert_eq!(get_instr_string(0x01021e13), "slli x28, x4, 16");
+    assert_eq!(get_instr_string(0x01129d93), "slli x27, x5, 17");
+    assert_eq!(get_instr_string(0x01e31d13), "slli x26, x6, 30");
+    assert_eq!(get_instr_string(0x01f39c93), "slli x25, x7, 31");
 
 }
