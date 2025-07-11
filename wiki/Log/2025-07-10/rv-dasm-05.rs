@@ -231,7 +231,7 @@ fn inst_type_i_arith(func3: u32) -> String {
 }
 
 
-fn disassembler(inst: u32) -> String {
+fn disassemble(inst: u32) -> String {
 //────────────────────────────────────────────────
 // Desensamblar una instruccion en codigo maquina
 // Entrada: Instrucción en codigo maquina RISC-V
@@ -289,15 +289,6 @@ fn main() {
         0x00100093, // addi x1, x0, 1
         0x00111093, // slli x1, x2, 1
         0x00112093, // slti x1, x2, 1
-        0x00002013, // slti x0, x0, 0
-        0x0020af93, // slti x31, x1, 2
-        0x00412f13, // slti x30, x2, 4
-        0x0081ae93, // slti x29, x3, 8
-        0x01022e13, // slti x28, x4, 16
-        0x0112ad93, // slti x27, x5, 17
-        0x01e32d13, // slti x26, x6, 30
-        0x01f3ac93, // slti x25, x7, 31
-
     ];
 
 
@@ -306,7 +297,7 @@ fn main() {
         let machine_code: u32 = insts[i];
 
         //-- Pasar la instruccion a String
-        let inst: String = disassembler(insts[i]);
+        let inst: String = disassemble(insts[i]);
 
         //-- Imprimirla!
         println!("🟢 [{machine_code:#010X}]: {inst}");
@@ -468,49 +459,49 @@ fn test_is_type_i() {
 }
 
 #[test]
-fn test_disassembler_addi() {
-    //-- Test de la funcion disassembler
+fn test_disassemble_addi() {
+    //-- Test de la funcion disassemble
     //-- Instrucciones addi 
 
-    assert_eq!(disassembler(0x00000013), "addi x0, x0, 0");
-    assert_eq!(disassembler(0x00100093), "addi x1, x0, 1");
-    assert_eq!(disassembler(0x00200113), "addi x2, x0, 2");
-    assert_eq!(disassembler(0xfff00193), "addi x3, x0, -1");
-    assert_eq!(disassembler(0x7ff00213), "addi x4, x0, 2047");
-    assert_eq!(disassembler(0x00308f93), "addi x31, x1, 3");
-    assert_eq!(disassembler(0x00410413), "addi x8, x2, 4");
-    assert_eq!(disassembler(0x00820813), "addi x16, x4, 8");
-    assert_eq!(disassembler(0x01040893), "addi x17, x8, 16");
-    assert_eq!(disassembler(0xff040893), "addi x17, x8, -16");
-    assert_eq!(disassembler(0x80040893), "addi x17, x8, -2048");
-    assert_eq!(disassembler(0x0aa00093), "addi x1, x0, 170");    
+    assert_eq!(disassemble(0x00000013), "addi x0, x0, 0");
+    assert_eq!(disassemble(0x00100093), "addi x1, x0, 1");
+    assert_eq!(disassemble(0x00200113), "addi x2, x0, 2");
+    assert_eq!(disassemble(0xfff00193), "addi x3, x0, -1");
+    assert_eq!(disassemble(0x7ff00213), "addi x4, x0, 2047");
+    assert_eq!(disassemble(0x00308f93), "addi x31, x1, 3");
+    assert_eq!(disassemble(0x00410413), "addi x8, x2, 4");
+    assert_eq!(disassemble(0x00820813), "addi x16, x4, 8");
+    assert_eq!(disassemble(0x01040893), "addi x17, x8, 16");
+    assert_eq!(disassemble(0xff040893), "addi x17, x8, -16");
+    assert_eq!(disassemble(0x80040893), "addi x17, x8, -2048");
+    assert_eq!(disassemble(0x0aa00093), "addi x1, x0, 170");    
 }
 
 #[test]
-fn test_disassembler_slli() {
-    //-- Test de la funcion disassembler
+fn test_disassemble_slli() {
+    //-- Test de la funcion disassemble
     //-- Instrucciones slli
 
-    assert_eq!(disassembler(0x00111093), "slli x1, x2, 1");
-    assert_eq!(disassembler(0x00001013), "slli x0, x0, 0");
-    assert_eq!(disassembler(0x00209f93), "slli x31, x1, 2");
-    assert_eq!(disassembler(0x00411f13), "slli x30, x2, 4");
-    assert_eq!(disassembler(0x00819e93), "slli x29, x3, 8");
-    assert_eq!(disassembler(0x01021e13), "slli x28, x4, 16");
-    assert_eq!(disassembler(0x01129d93), "slli x27, x5, 17");
-    assert_eq!(disassembler(0x01e31d13), "slli x26, x6, 30");
-    assert_eq!(disassembler(0x01f39c93), "slli x25, x7, 31");
+    assert_eq!(disassemble(0x00111093), "slli x1, x2, 1");
+    assert_eq!(disassemble(0x00001013), "slli x0, x0, 0");
+    assert_eq!(disassemble(0x00209f93), "slli x31, x1, 2");
+    assert_eq!(disassemble(0x00411f13), "slli x30, x2, 4");
+    assert_eq!(disassemble(0x00819e93), "slli x29, x3, 8");
+    assert_eq!(disassemble(0x01021e13), "slli x28, x4, 16");
+    assert_eq!(disassemble(0x01129d93), "slli x27, x5, 17");
+    assert_eq!(disassemble(0x01e31d13), "slli x26, x6, 30");
+    assert_eq!(disassemble(0x01f39c93), "slli x25, x7, 31");
 }
 
 #[test]
-fn test_disassembler_slti() {
-    assert_eq!(disassembler(0x00112093), "slti x1, x2, 1");
-    assert_eq!(disassembler(0x00002013), "slti x0, x0, 0");
-    assert_eq!(disassembler(0x0020af93), "slti x31, x1, 2");
-    assert_eq!(disassembler(0x00412f13), "slti x30, x2, 4");
-    assert_eq!(disassembler(0x0081ae93), "slti x29, x3, 8");
-    assert_eq!(disassembler(0x01022e13), "slti x28, x4, 16");
-    assert_eq!(disassembler(0x0112ad93), "slti x27, x5, 17");
-    assert_eq!(disassembler(0x01e32d13), "slti x26, x6, 30");  
-    assert_eq!(disassembler(0x01f3ac93), "slti x25, x7, 31");  
+fn test_disassemble_slti() {
+    assert_eq!(disassemble(0x00112093), "slti x1, x2, 1");
+    assert_eq!(disassemble(0x00002013), "slti x0, x0, 0");
+    assert_eq!(disassemble(0x0020af93), "slti x31, x1, 2");
+    assert_eq!(disassemble(0x00412f13), "slti x30, x2, 4");
+    assert_eq!(disassemble(0x0081ae93), "slti x29, x3, 8");
+    assert_eq!(disassemble(0x01022e13), "slti x28, x4, 16");
+    assert_eq!(disassemble(0x0112ad93), "slti x27, x5, 17");
+    assert_eq!(disassemble(0x01e32d13), "slti x26, x6, 30");  
+    assert_eq!(disassemble(0x01f3ac93), "slti x25, x7, 31");  
 }
