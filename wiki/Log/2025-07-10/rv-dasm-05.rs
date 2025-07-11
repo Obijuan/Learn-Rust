@@ -6,6 +6,8 @@
 //  Licencia: CC BY-SA 4.0
 //────────────────────────────────────────────────
 
+//-- Instrucciones RV32I
+//-- https://msyksphinz-self.github.io/riscv-isadoc/html/rvi.html
 
 //────────────────────────────────────────────────
 //  CONSTANTES PARA ACCESO A LA ISA DEL RISCV   
@@ -210,11 +212,21 @@ fn inst_type_i_arith(func3: u32) -> String {
 //  SALIDA: nemonico
 //────────────────────────────────────────────────
 
-    let name = [
-      "addi", //-- 000
-      "slli", //-- 001
+    //-- Tabla de las instrucciones aritméticas
+    //-- y lógicas con valores inmediatos
+    let name = 
+    [          //-- Func3
+      "addi",  //-- 000
+      "slli",  //-- 001
+      "slti",  //-- 010
+      "sltiu", //-- 011
+      "xori",  //-- 100
+      "srli",  //-- 101
+      "ori",   //-- 110
+      "andi",  //-- 111
     ];
 
+    //-- Devolver la cadena a partir del código
     name[func3 as usize].to_string()
 }
 
@@ -275,16 +287,17 @@ fn main() {
     //-- Instrucciones RISC-V a desensamblar
     let insts = [
         0x00100093, // addi x1, x0, 1
-        0x00200113, // addi x2, x0, 2
         0x00111093, // slli x1, x2, 1
-        0x00001013, // slli x0,  x0, 0
-        0x00209f93, // slli x31, x1, 2
-        0x00411f13, // slli x30, x2, 4
-        0x00819e93, // slli x29, x3, 8
-        0x01021e13, // slli x28, x4, 16
-        0x01129d93, // slli x27, x5, 17
-        0x01e31d13, // slli x26, x6, 30
-        0x01f39c93, // slli x25, x7, 31
+        0x00112093, // slti x1, x2, 1
+        0x00002013, // slti x0, x0, 0
+        0x0020af93, // slti x31, x1, 2
+        0x00412f13, // slti x30, x2, 4
+        0x0081ae93, // slti x29, x3, 8
+        0x01022e13, // slti x28, x4, 16
+        0x0112ad93, // slti x27, x5, 17
+        0x01e32d13, // slti x26, x6, 30
+        0x01f3ac93, // slti x25, x7, 31
+
     ];
 
 
@@ -487,5 +500,17 @@ fn test_disassembler_slli() {
     assert_eq!(disassembler(0x01129d93), "slli x27, x5, 17");
     assert_eq!(disassembler(0x01e31d13), "slli x26, x6, 30");
     assert_eq!(disassembler(0x01f39c93), "slli x25, x7, 31");
+}
 
+#[test]
+fn test_disassembler_slti() {
+    assert_eq!(disassembler(0x00112093), "slti x1, x2, 1");
+    assert_eq!(disassembler(0x00002013), "slti x0, x0, 0");
+    assert_eq!(disassembler(0x0020af93), "slti x31, x1, 2");
+    assert_eq!(disassembler(0x00412f13), "slti x30, x2, 4");
+    assert_eq!(disassembler(0x0081ae93), "slti x29, x3, 8");
+    assert_eq!(disassembler(0x01022e13), "slti x28, x4, 16");
+    assert_eq!(disassembler(0x0112ad93), "slti x27, x5, 17");
+    assert_eq!(disassembler(0x01e32d13), "slti x26, x6, 30");  
+    assert_eq!(disassembler(0x01f3ac93), "slti x25, x7, 31");  
 }
