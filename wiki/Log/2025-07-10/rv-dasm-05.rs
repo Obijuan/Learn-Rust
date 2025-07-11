@@ -289,8 +289,19 @@ fn main() {
         0x00100093, // addi x1, x0, 1
         0x00111093, // slli x1, x2, 1
         0x00112093, // slti x1, x2, 1
-    ];
 
+        //-- TODO: Llevar a las funciones de test
+        0x00113093, // sltiu x1,  x2, 1
+        0x00003013, // sltiu x0,  x0, 0
+        0x0020bf93, // sltiu x31, x1, 2
+        0x00413f13, // sltiu x30, x2, 4
+        0x0081be93, // sltiu x29, x3, 8
+        0x01023e13, // sltiu x28, x4, 16
+        0x0112bd93, // sltiu x27, x5, 17
+        0x01e33d13, // sltiu x26, x6, 30
+        0x01f3bc93, // sltiu x25, x7, 31
+
+    ];
 
     for i in 0..insts.len() {
 
