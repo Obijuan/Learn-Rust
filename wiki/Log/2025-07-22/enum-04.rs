@@ -2,9 +2,9 @@
 
 //-- Definimos un enumerado simple
 enum Test {
-    Valor1,
-    Valor2,
-    Valor3,
+    Valor1,  //-- Valor 0
+    Valor2,  //-- Valor 1
+    Valor3,  //-- Valor 2
 }
 
 fn main() {
